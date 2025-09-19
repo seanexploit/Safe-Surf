@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe Surf - Protected Browser</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #3498db;
+      --primary-dark: #2980b9;
+      --secondary: #2ecc71;
+      --secondary-dark: #27ae60;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --light: #ecf0f1;
+      --dark: #2c3e50;
+      --gray: #95a5a6;
+      --sidebar-width: 280px;
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      color: var(--dark);
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      overflow-y: auto;
+      transition: var(--transition);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .logo-icon {
+      font-size: 24px;
+      margin-right: 10px;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .section {
+      margin-bottom: 25px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+      opacity: 0.8;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    input, button {
+      border: none;
+      outline: none;
+      border-radius: 4px;
+      padding: 10px 12px;
+      width: 100%;
+      font-size: 14px;
+    }
+
+    input {
+      background-color: rgba(255, 255, 255, 0.9);
+      color: var(--dark);
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+    }
+
+    button {
+      background-color: var(--secondary);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    button:hover {
+      background-color: var(--secondary-dark);
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    button.secondary:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.3);
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--secondary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .toggle-label {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-active {
+      background-color: var(--secondary);
+    }
+
+    .status-inactive {
+      background-color: var(--gray);
+    }
+
+    .divider {
+      height: 1px;
+      background-color: rgba(255, 255, 255, 0.2);
+      margin: 15px 0;
+    }
+
+    /* Browser Area Styles */
+    .browser-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .url-bar {
+      display: flex;
+      padding: 15px;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      z-index: 5;
+    }
+
+    .url-input {
+      flex: 1;
+      padding: 12px 15px;
+      border-radius: 24px;
+      background-color: var(--light);
+      margin-right: 10px;
+    }
+
+    .nav-buttons {
+      display: flex;
+    }
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--light);
+      color: var(--dark);
+      margin-left: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .nav-btn:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .webview-container {
+      flex: 1;
+      position: relative;
+      background: white;
+    }
+
+    .webview {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .webview-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      z-index: 10;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .webview-error {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      padding: 20px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .error-icon {
+      font-size: 48px;
+      color: #e74c3c;
+      margin-bottom: 15px;
+    }
+
+    .error-message {
+      color: #333;
+      margin-bottom: 20px;
+      max-width: 400px;
+    }
+
+    .retry-button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .retry-button:hover {
+      background: #2980b9;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background-color: var(--dark);
+      color: white;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: absolute;
+        left: -var(--sidebar-width);
+        height: 100%;
+      }
+      
+      .sidebar.show {
+        left: 0;
+      }
+      
+      .toggle-sidebar {
+        display: block;
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 20;
+      }
+    }
+
+    .block-patterns-list {
+      margin-top: 10px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .pattern-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pattern-item button {
+      width: auto;
+      padding: 4px 8px;
+      background: var(--danger);
+    }
+    
+    /* Dashboard Styles */
+    .dashboard {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .stat-card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .feature-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    
+    .log-container {
+      max-height: 150px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .log-time {
+      color: #aaa;
+      margin-right: 8px;
+    }
+    
+    .log-type {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
+    .blocked {
+      color: #e74c3c;
+    }
+    
+    .allowed {
+      color: #2ecc71;
+    }
+    
+    /* Phishing Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+    }
+    
+    .modal {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .modal-icon {
+      font-size: 24px;
+      margin-right: 10px;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .modal-content {
+      margin-bottom: 20px;
+    }
+    
+    .modal-url {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      word-break: break-all;
+      font-family: monospace;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .modal-btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .modal-btn-secondary {
+      background-color: var(--gray);
+      color: white;
+    }
+    
+    .phishing-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // Mock API implementation for browser environment
+    const createMockAPI = () => {
+      const storageKey = 'safeSurfData';
+      
+      const defaultData = {
+        pin: '1234',
+        whitelistMode: false,
+        blockPatterns: [],
+        featureToggles: {
+          enableAIModeration: true,
+          enableMalwareScan: true,
+          enableGoogleSafety: true,
+          enablePhishingDetection: true
+        },
+        securityStats: {
+          totalRequests: 142,
+          blockedRequests: 12,
+          malwareDetected: 3,
+          nudityBlocked: 5,
+          phishingDetected: 2,
+          lastUpdated: new Date().toISOString()
+        },
+        phishingPatterns: [
+          "paypal-login\\.com",
+          "appleid\\.verify\\.com",
+          "facebook-secure\\.login",
+          "amazon-account\\.verify",
+          "microsoft-account\\.security",
+          "bankofamerica\\.login-secure",
+          "wellsfargo-onlinebanking\\.com",
+          "chase-onlinebanking\\.com",
+          "instagram-account\\.verify",
+          "netflix-account\\.verify"
+        ]
+      };
+      
+      const getData = () => {
+        try {
+          const stored = localStorage.getItem(storageKey);
+          return stored ? JSON.parse(stored) : defaultData;
+        } catch {
+          return defaultData;
+        }
+      };
+      
+      const saveData = (data) => {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(data));
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      
+      return {
+        checkPin: async (pin) => {
+          const data = getData();
+          return pin === data.pin;
+        },
+        
+        setPin: async (pin) => {
+          const data = getData();
+          data.pin = pin;
+          return saveData(data);
+        },
+        
+        getWhitelistMode: async () => {
+          const data = getData();
+          return data.whitelistMode;
+        },
+        
+        toggleWhitelist: async (enabled) => {
+          const data = getData();
+          data.whitelistMode = enabled;
+          saveData(data);
+          return enabled;
+        },
+        
+        getBlockPatterns: async () => {
+          const data = getData();
+          return data.blockPatterns;
+        },
+        
+        addBlockPattern: async (pattern) => {
+          try {
+            new RegExp(pattern);
+            const data = getData();
+            data.blockPatterns.push(pattern);
+            saveData(data);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        
+        removeBlockPattern: async (index) => {
+          const data = getData();
+          if (index >= 0 && index < data.blockPatterns.length) {
+            data.blockPatterns.splice(index, 1);
+            saveData(data);
+            return true;
+          }
+          return false;
+        },
+        
+        getFeatureToggles: async () => {
+          const data = getData();
+          return data.featureToggles;
+        },
+        
+        toggleAIModeration: async (enabled) => {
+          const data = getData();
+          data.featureToggles.enableAIModeration = enabled;
+          saveData(data);
+          return enabled;
+        },
+        
+        toggleMalwareScan: async (enabled) => {
+          const data = getData();
+          data.featureToggles.enableMalwareScan = enabled;
+          saveData(data);
+          return enabled;
+        },
+        
+        toggleGoogleSafety: async (enabled) => {
+          const data = getData();
+          data.featureToggles.enableGoogleSafety = enabled;
+          saveData(data);
+          return enabled;
+        },
+        
+        togglePhishingDetection: async (enabled) => {
+          const data = getData();
+          data.featureToggles.enablePhishingDetection = enabled;
+          saveData(data);
+          return enabled;
+        },
+        
+        getSecurityStats: async () => {
+          const data = getData();
+          data.securityStats.totalRequests += Math.floor(Math.random() * 5);
+          data.securityStats.lastUpdated = new Date().toISOString();
+          saveData(data);
+          return data.securityStats;
+        },
+        
+        checkForPhishing: async (url) => {
+          const data = getData();
+          const patterns = data.phishingPatterns;
+          
+          for (const pattern of patterns) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(url)) {
+              data.securityStats.phishingDetected += 1;
+              data.securityStats.blockedRequests += 1;
+              saveData(data);
+              
+              return {
+                isPhishing: true,
+                pattern: pattern,
+                url: url
+              };
+            }
+          }
+          
+          return { isPhishing: false };
+        },
+        
+        getPhishingPatterns: async () => {
+          const data = getData();
+          return data.phishingPatterns;
+        },
+        
+        addPhishingPattern: async (pattern) => {
+          try {
+            new RegExp(pattern);
+            const data = getData();
+            data.phishingPatterns.push(pattern);
+            saveData(data);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        
+        removePhishingPattern: async (index) => {
+          const data = getData();
+          if (index >= 0 && index < data.phishingPatterns.length) {
+            data.phishingPatterns.splice(index, 1);
+            saveData(data);
+            return true;
+          }
+          return false;
+        }
+      };
+    };
+
+    // Create the API based on environment
+    if (typeof window.electronAPI === 'undefined') {
+      window.safeAPI = createMockAPI();
+    }
+
+    function SafeSurfBrowser() {
+      const [pin, setPin] = useState("");
+      const [url, setUrl] = useState("https://www.google.com");
+      const [currentUrl, setCurrentUrl] = useState("https://www.google.com");
+      const [sidebarOpen, setSidebarOpen] = useState(true);
+      const [whitelistMode, setWhitelistMode] = useState(false);
+      const [blockPattern, setBlockPattern] = useState("");
+      const [blockPatterns, setBlockPatterns] = useState([]);
+      const [toastMessage, setToastMessage] = useState("");
+      const [showToast, setShowToast] = useState(false);
+      const [history, setHistory] = useState(["https://www.google.com"]);
+      const [historyIndex, setHistoryIndex] = useState(0);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [securityStats, setSecurityStats] = useState({
+        totalRequests: 0,
+        blockedRequests: 0,
+        malwareDetected: 0,
+        nudityBlocked: 0,
+        phishingDetected: 0,
+        lastUpdated: new Date()
+      });
+      const [featureToggles, setFeatureToggles] = useState({
+        enableAIModeration: true,
+        enableMalwareScan: true,
+        enableGoogleSafety: true,
+        enablePhishingDetection: true
+      });
+      const [recentLogs, setRecentLogs] = useState([]);
+      const [phishingPattern, setPhishingPattern] = useState("");
+      const [phishingPatterns, setPhishingPatterns] = useState([]);
+      const [showPhishingModal, setShowPhishingModal] = useState(false);
+      const [phishingUrl, setPhishingUrl] = useState("");
+      
+      const iframeRef = useRef(null);
+
+      // Get the appropriate API based on environment
+      const getAPI = () => {
+        return window.electronAPI || window.safeAPI;
+      };
+
+      // Load data on component mount
+      useEffect(() => {
+        loadBlockPatterns();
+        loadWhitelistMode();
+        loadFeatureToggles();
+        loadSecurityStats();
+        loadRecentLogs();
+        loadPhishingPatterns();
+        
+        const interval = setInterval(() => {
+          loadSecurityStats();
+          loadRecentLogs();
+        }, 2000);
+        
+        return () => clearInterval(interval);
+      }, []);
+
+      // Handle iframe load events
+      useEffect(() => {
+        const iframe = iframeRef.current;
+        if (!iframe) return;
+
+        const handleLoad = () => {
+          setLoading(false);
+          setError(null);
+          try {
+            setCurrentUrl(iframe.contentWindow.location.href);
+          } catch (e) {
+            setCurrentUrl(iframe.src);
+          }
+        };
+
+        const handleError = () => {
+          setLoading(false);
+          setError("Failed to load the website. It may have refused connection.");
+        };
+
+        iframe.addEventListener('load', handleLoad);
+        iframe.addEventListener('error', handleError);
+
+        return () => {
+          iframe.removeEventListener('load', handleLoad);
+          iframe.removeEventListener('error', handleError);
+        };
+      }, [url]);
+
+      const loadBlockPatterns = async () => {
+        try {
+          const patterns = await getAPI().getBlockPatterns();
+          setBlockPatterns(patterns);
+        } catch (error) {
+          console.error("Error loading block patterns:", error);
+        }
+      };
+
+      const loadWhitelistMode = async () => {
+        try {
+          const mode = await getAPI().getWhitelistMode();
+          setWhitelistMode(mode);
+        } catch (error) {
+          console.error("Error loading whitelist mode:", error);
+        }
+      };
+
+      const loadFeatureToggles = async () => {
+        try {
+          const toggles = await getAPI().getFeatureToggles();
+          setFeatureToggles(toggles);
+        } catch (error) {
+          console.error("Error loading feature toggles:", error);
+        }
+      };
+
+      const loadSecurityStats = async () => {
+        try {
+          const stats = await getAPI().getSecurityStats();
+          setSecurityStats(stats);
+        } catch (error) {
+          console.error("Error loading security stats:", error);
+        }
+      };
+
+      const loadPhishingPatterns = async () => {
+        try {
+          const patterns = await getAPI().getPhishingPatterns();
+          setPhishingPatterns(patterns);
+        } catch (error) {
+          console.error("Error loading phishing patterns:", error);
+        }
+      };
+
+      const loadRecentLogs = async () => {
+        try {
+          const mockLogs = [
+            { time: new Date().toLocaleTimeString(), type: "Page Load", info: currentUrl },
+            { time: new Date(Date.now() - 30000).toLocaleTimeString(), type: "Blocked", info: "adult-content.com" },
+            { time: new Date(Date.now() - 60000).toLocaleTimeString(), type: "Allowed", info: "wikipedia.org" }
+          ];
+          setRecentLogs(mockLogs);
+        } catch (error) {
+          console.error("Error loading logs:", error);
+        }
+      };
+
+      // Show toast message
+      const showToastMessage = (message) => {
+        setToastMessage(message);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      };
+
+      // Check PIN
+      const checkPin = async () => {
+        try {
+          const ok = await getAPI().checkPin(pin);
+          showToastMessage(ok ? "PIN correct. Admin features unlocked." : "Invalid PIN");
+        } catch (error) {
+          showToastMessage("Error checking PIN");
+        }
+      };
+
+      // Set new PIN
+      const setNewPin = async () => {
+        if (!pin) {
+          showToastMessage("Please enter a PIN first");
+          return;
+        }
+        
+        try {
+          const ok = await getAPI().setPin(pin);
+          showToastMessage(ok ? "PIN updated successfully" : "Error updating PIN");
+        } catch (error) {
+          showToastMessage("Error setting PIN");
+        }
+      };
+
+      // Toggle whitelist mode
+      const toggleWhitelist = async () => {
+        try {
+          const enabled = await getAPI().toggleWhitelist(!whitelistMode);
+          setWhitelistMode(enabled);
+          showToastMessage(enabled ? "Whitelist mode enabled" : "Whitelist mode disabled");
+        } catch (error) {
+          showToastMessage("Error toggling whitelist mode");
+        }
+      };
+
+      // Add block pattern
+      const addBlockPattern = async () => {
+        if (!blockPattern) {
+          showToastMessage("Please enter a pattern first");
+          return;
+        }
+        
+        try {
+          const ok = await getAPI().addBlockPattern(blockPattern);
+          if (ok) {
+            setBlockPatterns([...blockPatterns, blockPattern]);
+            setBlockPattern("");
+            showToastMessage("Pattern added successfully");
+          } else {
+            showToastMessage("Invalid regex pattern");
+          }
+        } catch (error) {
+          showToastMessage("Error adding pattern");
+        }
+      };
+
+      // Remove block pattern
+      const removeBlockPattern = async (index) => {
+        try {
+          const ok = await getAPI().removeBlockPattern(index);
+          if (ok) {
+            const newPatterns = [...blockPatterns];
+            newPatterns.splice(index, 1);
+            setBlockPatterns(newPatterns);
+            showToastMessage("Pattern removed");
+          }
+        } catch (error) {
+          showToastMessage("Error removing pattern");
+        }
+      };
+
+      // Toggle AI moderation
+      const toggleAIModeration = async () => {
+        try {
+          const enabled = await getAPI().toggleAIModeration(!featureToggles.enableAIModeration);
+          setFeatureToggles({...featureToggles, enableAIModeration: enabled});
+          showToastMessage(enabled ? "AI moderation enabled" : "AI moderation disabled");
+        } catch (error) {
+          showToastMessage("Error toggling AI moderation");
+        }
+      };
+
+      // Toggle malware scan
+      const toggleMalwareScan = async () => {
+        try {
+          const enabled = await getAPI().toggleMalwareScan(!featureToggles.enableMalwareScan);
+          setFeatureToggles({...featureToggles, enableMalwareScan: enabled});
+          showToastMessage(enabled ? "Malware scan enabled" : "Malware scan disabled");
+        } catch (error) {
+          showToastMessage("Error toggling malware scan");
+        }
+      };
+
+      // Toggle Google safety
+      const toggleGoogleSafety = async () => {
+        try {
+          const enabled = await getAPI().toggleGoogleSafety(!featureToggles.enableGoogleSafety);
+          setFeatureToggles({...featureToggles, enableGoogleSafety: enabled});
+          showToastMessage(enabled ? "Google Safety enabled" : "Google Safety disabled");
+        } catch (error) {
+          showToastMessage("Error toggling Google Safety");
+        }
+      };
+
+      // Toggle phishing detection
+      const togglePhishingDetection = async () => {
+        try {
+          const enabled = await getAPI().togglePhishingDetection(!featureToggles.enablePhishingDetection);
+          setFeatureToggles({...featureToggles, enablePhishingDetection: enabled});
+          showToastMessage(enabled ? "Phishing detection enabled" : "Phishing detection disabled");
+        } catch (error) {
+          showToastMessage("Error toggling phishing detection");
+        }
+      };
+
+      // Add phishing pattern
+      const addPhishingPattern = async () => {
+        if (!phishingPattern) {
+          showToastMessage("Please enter a pattern first");
+          return;
+        }
+        
+        try {
+          const ok = await getAPI().addPhishingPattern(phishingPattern);
+          if (ok) {
+            setPhishingPatterns([...phishingPatterns, phishingPattern]);
+            setPhishingPattern("");
+            showToastMessage("Phishing pattern added successfully");
+          } else {
+            showToastMessage("Invalid regex pattern");
+          }
+        } catch (error) {
+          showToastMessage("Error adding phishing pattern");
+        }
+      };
+
+      // Remove phishing pattern
+      const removePhishingPattern = async (index) => {
+        try {
+          const ok = await getAPI().removePhishingPattern(index);
+          if (ok) {
+            const newPatterns = [...phishingPatterns];
+            newPatterns.splice(index, 1);
+            setPhishingPatterns(newPatterns);
+            showToastMessage("Phishing pattern removed");
+          }
+        } catch (error) {
+          showToastMessage("Error removing phishing pattern");
+        }
+      };
+
+      // Check for phishing
+      const checkForPhishing = async (urlToCheck) => {
+        if (!featureToggles.enablePhishingDetection) {
+          return false;
+        }
+        
+        try {
+          const result = await getAPI().checkForPhishing(urlToCheck);
+          if (result.isPhishing) {
+            setPhishingUrl(urlToCheck);
+            setShowPhishingModal(true);
+            return true;
+          }
+        } catch (error) {
+          console.error("Error checking for phishing:", error);
+        }
+        
+        return false;
+      };
+
+      // Handle phishing modal actions
+      const handlePhishingContinue = () => {
+        setShowPhishingModal(false);
+        setUrl(phishingUrl);
+        setLoading(true);
+      };
+
+      const handlePhishingCancel = () => {
+        setShowPhishingModal(false);
+        setPhishingUrl("");
+      };
+
+      // Navigate to URL
+      const navigateTo = async (targetUrl) => {
+        if (!targetUrl) return;
+        
+        if (!targetUrl.includes('.') && !targetUrl.startsWith('http')) {
+          targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(targetUrl);
+        } else {
+          if (!targetUrl.startsWith('http')) {
+            targetUrl = 'https://' + targetUrl;
+          }
+        }
+        
+        const isPhishing = await checkForPhishing(targetUrl);
+        if (isPhishing) {
+          return;
+        }
+        
+        setUrl(targetUrl);
+        setLoading(true);
+        setError(null);
+        
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(targetUrl);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+      };
+
+      // Go back in history
+      const goBack = () => {
+        if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          setHistoryIndex(newIndex);
+          setUrl(history[newIndex]);
+          setLoading(true);
+          setError(null);
+        }
+      };
+
+      // Go forward in history
+      const goForward = () => {
+        if (historyIndex < history.length - 1) {
+          const newIndex = historyIndex + 1;
+          setHistoryIndex(newIndex);
+          setUrl(history[newIndex]);
+          setLoading(true);
+          setError(null);
+        }
+      };
+
+      // Refresh page
+      const refreshPage = () => {
+        setLoading(true);
+        setError(null);
+        if (iframeRef.current) {
+          iframeRef.current.src = iframeRef.current.src;
+        }
+      };
+
+      // Handle URL input key press
+      const handleUrlKeyPress = (e) => {
+        if (e.key === 'Enter') {
+          navigateTo(e.target.value);
+        }
+      };
+
+      // Handle URL input change
+      const handleUrlChange = (e) => {
+        setUrl(e.target.value);
+      };
+
+      // Toggle sidebar
+      const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+      };
+
+      // Quick navigation buttons
+      const quickNav = (site) => {
+        let siteUrl;
+        switch(site) {
+          case 'google':
+            siteUrl = 'https://www.google.com';
+            break;
+          case 'wikipedia':
+            siteUrl = 'https://www.wikipedia.org';
+            break;
+          case 'khan':
+            siteUrl = 'https://www.khanacademy.org';
+            break;
+          case 'youtube':
+            siteUrl = 'https://www.youtube.com';
+            break;
+          default:
+            siteUrl = 'https://www.google.com';
+        }
+        navigateTo(siteUrl);
+      };
+
+      // Retry loading the page
+      const retryLoad = () => {
+        setLoading(true);
+        setError(null);
+        if (iframeRef.current) {
+          iframeRef.current.src = url;
+        }
+      };
+
+      return (
+        <div className="app">
+          <div className={`sidebar ${sidebarOpen ? 'show' : ''}`}>
+            <div className="logo">
+              <span className="logo-icon"><i className="fas fa-shield-alt"></i></span>
+              <span className="logo-text">Safe Surf</span>
+            </div>
+
+            <div className="section">
+              <div className="section-title">Security Dashboard</div>
+              <div className="dashboard">
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-value">{securityStats.totalRequests}</div>
+                    <div className="stat-label">Total Requests</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value">{securityStats.blockedRequests}</div>
+                    <div className="stat-label">Blocked</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value">{securityStats.malwareDetected}</div>
+                    <div className="stat-label">Malware</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value">{securityStats.nudityBlocked}</div>
+                    <div className="stat-label">Nudity</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value">{securityStats.phishingDetected}</div>
+                    <div className="stat-label">Phishing</div>
+                  </div>
+                </div>
+                
+                <div className="feature-toggle">
+                  <span>AI Content Moderation</span>
+                  <label className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={featureToggles.enableAIModeration}
+                      onChange={toggleAIModeration}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+                
+                <div className="feature-toggle">
+                  <span>Malware Detection</span>
+                  <label className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={featureToggles.enableMalwareScan}
+                      onChange={toggleMalwareScan}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+                
+                <div className="feature-toggle">
+                  <span>Google Safety</span>
+                  <label className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={featureToggles.enableGoogleSafety}
+                      onChange={toggleGoogleSafety}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+                
+                <div className="section-title">Recent Activity</div>
+                <div className="log-container">
+                  {recentLogs.map((log, index) => (
+                    <div key={index} className="log-entry">
+                      <span className="log-time">{log.time}</span>
+                      <span className={`log-type ${log.type === 'Blocked' ? 'blocked' : 'allowed'}`}>
+                        {log.type}
+                      </span>
+                      <span>{log.info}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="section">
+              <div className="section-title">Admin Access</div>
+              <div className="input-group">
+                <label htmlFor="pin">Admin PIN</label>
+                <input 
+                  id="pin" 
+                  type="password" 
+                  placeholder="Enter PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                />
+              </div>
+              <button className="secondary" onClick={checkPin}>Unlock Admin</button>
+              <button onClick={setNewPin}>Set New PIN</button>
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="section">
+              <div className="section-title">Content Filtering</div>
+              <div className="toggle-container">
+                <span className="toggle-label">
+                  <span className={`status-indicator ${whitelistMode ? 'status-active' : 'status-inactive'}`}></span>
+                  Whitelist Mode
+                </span>
+                <label className="toggle-switch">
+                  <input 
+                    type="checkbox" 
+                    checked={whitelistMode}
+                    onChange={toggleWhitelist}
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+              
+              <div className="input-group">
+                <label htmlFor="blockPattern">Block Pattern (Regex)</label>
+                <input 
+                  id="blockPattern" 
+                  placeholder="Enter regex pattern"
+                  value={blockPattern}
+                  onChange={(e) => setBlockPattern(e.target.value)}
+                />
+              </div>
+              <button onClick={addBlockPattern}>Add Block Pattern</button>
+              
+              {blockPatterns.length > 0 && (
+                <div className="block-patterns-list">
+                  {blockPatterns.map((pattern, index) => (
+                    <div key={index} className="pattern-item">
+                      {pattern}
+                      <button onClick={() => removeBlockPattern(index)}>
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="section">
+              <div className="section-title">Quick Navigation</div>
+              <div className="input-group">
+                <label htmlFor="openUrl">Website URL</label>
+                <input 
+                  id="openUrl" 
+                  placeholder="https://example.com or search query"
+                  value={url}
+                  onChange={handleUrlChange}
+                  onKeyPress={handleUrlKeyPress}
+                />
+              </div>
+              <button onClick={() => navigateTo(url)}>Visit Website</button>
+              
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px'}}>
+                <button className="secondary" onClick={() => quickNav('google')} style={{flex: '1', minWidth: '100px'}}>
+                  Google
+                </button>
+                <button className="secondary" onClick={() => quickNav('wikipedia')} style={{flex: '1', minWidth: '100px'}}>
+                  Wikipedia
+                </button>
+                <button className="secondary" onClick={() => quickNav('khan')} style={{flex: '1', minWidth: '100px'}}>
+                  Khan Academy
+                </button>
+                <button className="secondary" onClick={() => quickNav('youtube')} style={{flex: '1', minWidth: '100px'}}>
+                  YouTube
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="browser-area">
+            <div className="url-bar">
+              <input 
+                className="url-input" 
+                type="text" 
+                placeholder="Enter website URL or search query"
+                value={currentUrl}
+                onChange={handleUrlChange}
+                onKeyPress={handleUrlKeyPress}
+              />
+              <div className="nav-buttons">
+                <div className="nav-btn" onClick={goBack} title="Back">
+                  <i className="fas fa-arrow-left"></i>
+                </div>
+                <div className="nav-btn" onClick={goForward} title="Forward">
+                  <i className="fas fa-arrow-right"></i>
+                </div>
+                <div className="nav-btn" onClick={refreshPage} title="Refresh">
+                  <i className="fas fa-sync-alt"></i>
+                </div>
+                <div className="nav-btn toggle-sidebar" onClick={toggleSidebar} title="Toggle Sidebar">
+                  <i className="fas fa-bars"></i>
+                </div>
+              </div>
+            </div>
+            
+            <div className="webview-container">
+              {loading && (
+                <div className="webview-loading">
+                  <div className="loading-spinner"></div>
+                </div>
+              )}
+              
+              {error && (
+                <div className="webview-error">
+                  <div className="error-icon">
+                    <i className="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <div className="error-message">
+                    {error}
+                  </div>
+                  <button className="retry-button" onClick={retryLoad}>
+                    Retry
+                  </button>
+                </div>
+              )}
+              
+              <iframe
+                ref={iframeRef}
+                className="webview"
+                src={url}
+                title="webview"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                allow="geolocation; microphone; camera"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
+
+          <div className={`toast ${showToast ? 'show' : ''}`}>
+            {toastMessage}
+          </div>
+
+          {showPhishingModal && (
+            <div className="modal-overlay">
+              <div className="modal">
+                <div className="modal-header">
+                  <span className="modal-icon" style={{color: '#e74c3c'}}>
+                    <i className="fas fa-exclamation-triangle"></i>
+                  </span>
+                  <span className="modal-title">Phishing Warning</span>
+                </div>
+                <div className="modal-content">
+                  <p>We've detected that this website may be a phishing attempt:</p>
+                  <div className="modal-url">{phishingUrl}</div>
+                  <p>Phishing websites try to trick you into revealing personal information like passwords or credit card details.</p>
+                </div>
+                <div className="modal-buttons">
+                  <button className="modal-btn modal-btn-secondary" onClick={handlePhishingCancel}>
+                    Go Back
+                  </button>
+                  <button className="modal-btn modal-btn-primary" onClick={handlePhishingContinue}>
+                    Continue Anyway
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<SafeSurfBrowser />, document.getElementById('root'));
+  </script>
+</body>
+</html>
